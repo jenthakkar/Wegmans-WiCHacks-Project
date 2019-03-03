@@ -18,12 +18,13 @@ class Store:
 #fetching store data
 ######################
 
+
+headers = {"Subscription-Key": "93e653b15a1f4f68b4687fac88c4584a"}
+
+params = urllib.parse.urlencode({
+})
+
 def main():
-
-    headers = {"Subscription-Key": "93e653b15a1f4f68b4687fac88c4584a"}
-
-    params = urllib.parse.urlencode({
-    })
 
     try:
         #stores/ <insert a number here for one store> ?api
@@ -54,7 +55,7 @@ def main():
         data = response.read()
         data = data.decode('utf8').replace("'", '"')
         jsonData = json.loads(data)
-        stores = [];
+        stores = []
 
         for store in jsonData["stores"]:
             stores.append(Store(store["latitude"], store["longitude"], store["number"], store["type"]))
@@ -63,7 +64,6 @@ def main():
         print(sorted(stores, key = lambda store: (store.latitude,store.longitude)))
 
         connection.close()
-
 
     except Exception as e:
         print("[Errno {0}] {1}".format(e.errno, e.strerror))
