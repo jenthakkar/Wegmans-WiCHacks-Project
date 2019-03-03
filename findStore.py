@@ -1,7 +1,7 @@
 import http.client, urllib.request, urllib.parse, urllib.error, base64
 import requests, json
 
-#js2py, 
+#js2py,
 
 ################################################################################
 #this defines a Store class to store the data that we need related to each store
@@ -17,10 +17,18 @@ class Store:
     def __repr__(self):
         return str(self.longitude) + " and " + str(self.latitude)
 
+##########################################################################
+#Comparing the users location to stores' location to find closest one
+##########################################################################
+
+def closestStore(stores, userLong, userLat):
+
+
+    return closestStoreNum
+
 ######################
 #fetching store data
 ######################
-
 
 headers = {"Subscription-Key": "93e653b15a1f4f68b4687fac88c4584a"}
 
@@ -66,6 +74,13 @@ def main():
 
     for store in jsonData["stores"]:
         stores.append(Store(store["latitude"], store["longitude"], store["number"], store["type"]))
+        #print(store)
+
+        # 43.06729 and -77.61175
+    for store in stores:
+        if store.longitude == 43.06729:
+            print(store.number)
+
 
     connection.close()
     for store in stores:
