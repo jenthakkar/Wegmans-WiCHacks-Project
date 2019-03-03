@@ -1,4 +1,7 @@
-import http.client, urllib.request, urllib.parse, urllib.error, base64, requests, json
+import http.client, urllib.request, urllib.parse, urllib.error, base64
+import requests, json, userLocation
+
+#js2py
 
 ################################################################################
 #this defines a Store class to store the data that we need related to each store
@@ -55,17 +58,20 @@ def main():
         data = response.read()
         data = data.decode('utf8').replace("'", '"')
         jsonData = json.loads(data)
-        stores = []
-
-        for store in jsonData["stores"]:
-            stores.append(Store(store["latitude"], store["longitude"], store["number"], store["type"]))
-
-
-        print(sorted(stores, key = lambda store: (store.latitude,store.longitude)))
-
-        connection.close()
 
     except Exception as e:
         print("[Errno {0}] {1}".format(e.errno, e.strerror))
 
+    stores = []
+
+    for store in jsonData["stores"]:
+        stores.append(Store(store["latitude"], store["longitude"], store["number"], store["type"]))
+
+    connection.close()
+    for store in stores:
+        if store.type != "Wegmans Store":
+            stores.remove(store)
+
+    #print(sorted(stores, key = lambda store: (store.latitude,store.longitude)))
+    
 main()
