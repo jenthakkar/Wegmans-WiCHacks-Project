@@ -1,7 +1,7 @@
 import http.client, urllib.request, urllib.parse, urllib.error, base64
 import requests, json
 
-#js2py, 
+#js2py,
 
 ################################################################################
 #this defines a Store class to store the data that we need related to each store
@@ -73,6 +73,18 @@ def main():
             stores.remove(store)
 
     #print(sorted(stores, key = lambda store: (store.latitude,store.longitude)))
-    location = open("userLocation.json")
+    location = open('userLocation.json').read()
+    data = json.loads(location)
+    entry =  data['entry']
+    info = entry[0]
+    messaging = info['messaging']
+    moreinfo=messaging[0]
+    message = moreinfo['message']
+    attachments = message['attachments']
+    importantAttachments = attachments[0]
+    payload = importantAttachments['payload']
+    print(payload)
+
+
 
 main()
