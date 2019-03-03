@@ -8,11 +8,12 @@ import requests, json
 ################################################################################
 
 class Store:
-    def __init__(self, longitude, latitude, number, type):
+    def __init__(self, longitude, latitude, number, type, name):
         self.longitude = longitude
         self.latitude = latitude
         self.type = type
         self.number = number
+        self.name = name
 
     def __repr__(self):
         return str(self.longitude) + " and " + str(self.latitude)
@@ -73,21 +74,20 @@ def main():
     stores = []
 
     for store in jsonData["stores"]:
-        stores.append(Store(store["latitude"], store["longitude"], store["number"], store["type"]))
+        stores.append(Store(store["latitude"], store["longitude"], store["number"], store["type"], store['name']))
         #print(store)
 
         # 43.06729 and -77.61175
     for store in stores:
         if store.longitude == 43.06729:
-            print(store.number)
+            print("Store near Rochester Number: " + str(store.number))
 
-
-    connection.close()
     for store in stores:
         if store.type != "Wegmans Store":
             stores.remove(store)
 
     #print(sorted(stores, key = lambda store: (store.latitude,store.longitude)))
+
     location = open('userLocation.json').read()
     data = json.loads(location)
     entry =  data['entry']
@@ -98,7 +98,36 @@ def main():
     attachments = message['attachments']
     importantAttachments = attachments[0]
     payload = importantAttachments['payload']
-    print(payload)
+    coords = payload['coordinates']
+    userLong = coords['long']
+    userLat = coords['lat']
+    print("Users Longitude: " + str(userLong))
+    print("Users Latitude: " + str(userLat))
+
+    closestLong = 200;
+    closestLat = 200;
+    closestStoreNum = '';
+    nameOfStore = ''
+
+    for store in stores:
+        long = 0;
+        lat = 0;
+        long = abs(float(userLong) - float(store.longitude))
+        lat = abs(float(userLat) - float(store.longitude))
+
+        if closestLong > long and closestLat > lat:
+            closestLong = long
+            closestLat = lat
+            closestStoreNum = store.number
+            nameOfStore = store.name
+
+    print("Number of the store closest to the user: " + str(closestStoreNum))
+    print("Name of the store: " + nameOfStore)
+
+    connection.close()
+
+
+
 
 
 
