@@ -75,10 +75,10 @@ def main():
     #print(sorted(stores, key = lambda store: (store.latitude,store.longitude)))
     location = open('userLocation.json').read()
     data = json.loads(location)
-    entry =  data['entry']
+    entry = data['entry']
     info = entry[0]
     messaging = info['messaging']
-    moreinfo=messaging[0]
+    moreinfo = messaging[0]
     message = moreinfo['message']
     attachments = message['attachments']
     importantAttachments = attachments[0]
