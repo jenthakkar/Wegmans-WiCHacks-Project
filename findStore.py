@@ -1,5 +1,5 @@
 import http.client, urllib.request, urllib.parse, urllib.error, base64
-import requests, json, userLocation
+import requests, json
 
 #js2py
 
@@ -73,5 +73,6 @@ def main():
             stores.remove(store)
 
     #print(sorted(stores, key = lambda store: (store.latitude,store.longitude)))
-    
+    location = open("userLocation.json")
+
 main()
