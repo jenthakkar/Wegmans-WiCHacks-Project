@@ -65,12 +65,12 @@ def main():
         connection.request("GET", "/stores/?api-version=2018-10-18&%s" % params, "{body}", headers)
         response = connection.getresponse()
         data = response.read()
-        data = data.decode('utf8').replace("'", '"')
-        jsonData = json.loads(data)
 
     except Exception as e:
         print("[Errno {0}] {1}".format(e.errno, e.strerror))
 
+    data = data.decode('utf8').replace("'", '"')
+    jsonData = json.loads(data)
     stores = []
 
     for store in jsonData["stores"]:
@@ -125,10 +125,5 @@ def main():
     print("Name of the store: " + nameOfStore)
 
     connection.close()
-
-
-
-
-
 
 main()
