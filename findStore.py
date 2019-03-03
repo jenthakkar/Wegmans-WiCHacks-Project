@@ -1,7 +1,7 @@
 import http.client, urllib.request, urllib.parse, urllib.error, base64
 import requests, json
 
-#js2py
+#js2py, 
 
 ################################################################################
 #this defines a Store class to store the data that we need related to each store

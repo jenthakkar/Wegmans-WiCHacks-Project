@@ -1,0 +1,37 @@
+{
+  "object": "page",
+  "entry": [
+    {
+      "id": "<PAGE_ID>",
+      "time": 1472672934319,
+      "messaging": [
+        {
+          "sender": {
+            "id": "<PSID>"
+          },
+          "recipient": {
+            "id": "<PAGE_ID>"
+          },
+          "timestamp": 1472672934259,
+          "message": {
+            "mid": "m_AG5Hz2Uq7tuwNEhXfYYKj8mJEM_QPpz5jdCK48PnKAjSdjfipqxqMvK8ma6AC8fplwlqLP_5cgXIbu7I3rBN0P",
+            "seq": 297,
+            "attachments": [
+              {
+                "title": "Facebook HQ",
+                "url": "https://www.facebook.com/l.php?u=https%....5-7Ocxrmg",
+                "type": "location",
+                "payload": {
+                  "coordinates": {
+                    "lat": 37.483872693672,
+                    "long": -122.14900441942
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
