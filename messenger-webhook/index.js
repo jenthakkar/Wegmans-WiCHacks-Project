@@ -17,14 +17,28 @@ const
     request = require('request'),
     express = require('express'),
     dotenv = require('dotenv'),
+    apiai = require('apiai'),
+    dialogflow = require('dialogflow'),
+    uuid = require("uuid"),
+    axios = require('axios'),
     bodyParser = require('body-parser'),
     app = express().use(bodyParser.json()); // creates express http server
+
+
+//Import Config file
+const config = require("./config.js");
 
 dotenv.config();
 
 // Sets server port and logs message on success
 app.listen(process.env.PORT || 3000, () => console.log('webhook is listening'));
 
+// Dialogflow v1
+const dialogflowService = apiai(config.API_AI_CLIENT_ACCESS_TOKEN, {
+    language: "en",
+    requestSource: "fb"
+});
+const sessionIds = new Map();
 
 /*
  * Reference: https://developers.facebook.com/docs/messenger-platform/getting-started/webhook-setup
@@ -49,6 +63,19 @@ app.post('/webhook', (req, res) => {
 
         // Iterates over each entry - there may be multiple if batched
         body.entry.forEach(function(entry) {
+            var pageID = entry.id;
+            var timeOfEvent = entry.time;
+
+            // Iterate over each messaging event
+            entry.messaging.forEach(function (messagingEvent) {
+                if (messagingEvent.message) {
+                    receivedMessage(messagingEvent);
+                } else {
+                    console.log("Webhook received unknown messagingEvent: ", messagingEvent);
+                }
+            });
+
+            /*
 
             // Gets the message. entry.messaging is an array, but 
             // will only ever contain one message, so we get index 0.
@@ -67,6 +94,8 @@ app.post('/webhook', (req, res) => {
             } else if (webhook_event.postback) {
                 handlePostback(sender_psid, webhook_event.postback);
             }
+
+            */
         });
 
         // Returns a '200 OK' response to all requests
@@ -122,6 +151,179 @@ app.get('/webhook', (req, res) => {
         }
     }
 });
+
+
+/* ======================================================================== */
+// Reference: https://www.yudiz.com/chatbot-for-facebook-messenger-using-dialogflow-and-node-js-part1/
+
+function receivedMessage(event) {
+    var senderID = event.sender.id;
+    var recipientID = event.recipient.id;
+    var timeOfMessage = event.timestamp;
+    var message = event.message;
+
+    if (!sessionIds.has(senderID)) {
+        sessionIds.set(senderID, uuid.v1());
+    }
+
+    var messageId = message.mid;
+    var appId = message.app_id;
+    var metadata = message.metadata;
+
+    // You may get a text or attachment but not both
+    var messageText = message.text;
+    var messageAttachments = message.attachments;
+
+    if (messageText) {
+        //send message to Dialogflow
+        sendToDialogflow(senderID, messageText);
+    } else if (messageAttachments) {
+        handleMessageAttachments(messageAttachments, senderID);
+    }
+}
+
+
+function sendToDialogflow(sender, text) {
+    sendTypingOn(sender); // Show that bot is typing on Messenger
+    let dialogflowRequest = dialogflowService.textRequest(text, {
+        sessionId: sessionIds.get(sender)
+    });
+
+    dialogflowRequest.on("response", response => {
+        if (isDefined(response.result)) {
+            handleDialogflowResponse(sender, response);
+        }
+    });
+
+    dialogflowRequest.on("error", error => console.error(error));
+    dialogflowRequest.end();
+}
+
+// Make sure we are receiving the proper response
+const isDefined = (obj) => {
+    if (typeof obj == "undefined") {
+        return false;
+    }
+    if (!obj) {
+        return false;
+    }
+    return obj != null;
+}
+
+// Turn on typing indicator
+const sendTypingOn = (recipientId) => {
+    var messageData = {
+        recipient: {
+            id: recipientId
+        },
+        sender_action: "typing_on"
+    };
+    callSendAPI(messageData);
+}
+
+// Turn off typing indicator
+const sendTypingOff = (recipientId) => {
+    var messageData = {
+        recipient: {
+            id: recipientId
+        },
+        sender_action: "typing_off"
+    };
+
+    callSendAPI(messageData);
+}
+
+// Handle Dialogflow Response
+function handleDialogflowResponse(sender, response) {
+    let responseText = response.result.fulfillment.speech;
+    let responseData = response.result.fulfillment.data;
+    let messages = response.result.fulfillment.messages;
+    let action = response.result.action;
+    let contexts = response.result.contexts;
+    let parameters = response.result.parameters;
+
+    sendTypingOff(sender);
+
+    if (responseText == "" && !isDefined(action)) {
+        // Dialogflow could not evaluate input.
+        console.log("Unknown query" + response.result.resolvedQuery);
+        sendTextMessage(
+            sender,
+            "I'm not sure what you want. Can you be more specific?"
+        );
+    } else if (isDefined(action)) {
+        handleDialogflowAction(sender, action, responseText, contexts, parameters);
+    } else if (isDefined(responseData) && isDefined(responseData.facebook)) {
+        try {
+            console.log("Response as formatted message" + responseData.facebook);
+            sendTextMessage(sender, responseData.facebook);
+        } catch (err) {
+            sendTextMessage(sender, err.message);
+        }
+    } else if (isDefined(responseText)) {
+        sendTextMessage(sender, responseText);
+    }
+}
+
+// callSendAPI
+const callSendAPI = async (messageData) => {
+ 
+const url = "https://graph.facebook.com/v3.0/me/messages?access_token=" + process.env.PAGE_ACCESS_TOKEN;
+  await axios.post(url, messageData)
+    .then(function (response) {
+      if (response.status == 200) {
+        var recipientId = response.data.recipient_id;
+        var messageId = response.data.message_id;
+        if (messageId) {
+          console.log(
+            "Successfully sent message with id %s to recipient %s",
+            messageId,
+            recipientId
+          );
+        } else {
+          console.log(
+            "Successfully called Send API for recipient %s",
+            recipientId
+          );
+        }
+      }
+    })
+    .catch(function (error) {
+      console.log(error.response.headers);
+    });
+}
+
+// Send text
+const sendTextMessage = async (recipientId, text) => {
+    var messageData = {
+        recipient: {
+            id: recipientId
+        },
+        message: {
+            text: text
+        }
+    };
+    await callSendAPI(messageData);
+}
+
+
+function handleDialogflowAction(sender, action, responseText, contexts, parameters) {
+    switch (action) {
+        case "send-text":
+            var responseText = "This is example of Text message.";
+            sendTextMessage(sender, responseText);
+            break;
+        case "find_store":
+            var responseText = "here is some stuff for you.";
+            sendTextMessage(sender, responseText);
+            break;
+        default:
+            //unhandled action, just send back the text
+            var responseText = "Sorry, I don't understand what you said.";
+            sendTextMessage(sender, responseText);
+    }
+}
+
 
 /* ======================================================================== */
 
@@ -201,6 +403,7 @@ function handlePostback(sender_psid, received_postback) {
     callSendAPI(sender_psid, response);
 }
 
+/*
 // Sends response messages via the Send API
 function callSendAPI(sender_psid, response) {
     // Construct the message body
@@ -225,5 +428,7 @@ function callSendAPI(sender_psid, response) {
         }
     });
 }
+*/
+
 
 

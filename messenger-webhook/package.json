@@ -10,10 +10,14 @@
   "author": "Sam Kustin",
   "license": "ISC",
   "dependencies": {
+    "apiai": "^4.0.3",
+    "axios": "^0.18.0",
     "body-parser": "^1.18.3",
+    "dialogflow": "^0.8.0",
     "dotenv": "^6.2.0",
     "express": "^4.16.4",
-    "request": "^2.72.0"
+    "request": "^2.88.0",
+    "uuid": "^3.3.2"
   },
   "engines": {
     "node": "9.x"
